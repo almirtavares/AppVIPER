@@ -21,6 +21,7 @@ protocol AnyView {
 
 class UserViewController: UIViewController, AnyView {
     var presenter: AnyPresenter?
+    var users: [User] = []
     
     private let tableView: UITableView = {
         let table = UITableView()
@@ -30,8 +31,16 @@ class UserViewController: UIViewController, AnyView {
         return table
     }()
     
+    private let label: UILabel = {
+        let label = UILabel()
+        label.textAlignment = .center
+        label.isHidden = true
+        return label
+    }()
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.addSubview(label)
         view.backgroundColor = .systemBlue
         view.addSubview(tableView)
         tableView.delegate = self
@@ -41,24 +50,39 @@ class UserViewController: UIViewController, AnyView {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         tableView.frame = view.bounds
+        label.frame = CGRect(x: 0, y: 0, width: 200, height: 50)
+        label.center = view.center
     }
     
     func update(with users: [User]) {
-        
+        print("Got users")
+        DispatchQueue.main.async {
+            self.users = users
+            self.tableView.reloadData()
+            self.tableView.isHidden = false
+        }
     }
     
     func update(with error: String) {
-        
+        print(error)
+        DispatchQueue.main.async {
+            self.users = []
+            self.label.text = error
+            self.tableView.isHidden = true
+            self.label.isHidden = false
+        }
     }
 }
 
 extension UserViewController: UITableViewDelegate, UITableViewDataSource {
  
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return 0
+        return users.count
     }
     
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        return UITableViewCell()
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        cell.textLabel?.text = users[indexPath.row].name
+        return cell
     }
 }
